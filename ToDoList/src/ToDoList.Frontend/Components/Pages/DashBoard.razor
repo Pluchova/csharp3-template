@@ -6,9 +6,12 @@
 @rendermode InteractiveServer
 
 <h1>Dashboard</h1>
+
 <button class="btn btn-primary" @onclick="() => CreateItem()">Add new Task</button>
 <button class="btn btn-dark" @onclick="OrderById">@((isSortedByIdAscending ? "Od nejvyššího" : "Od nejnižšího"))</button>
 <button class ="btn btn-dark" @onclick="OrderByName">@((isSortedByNameAscending ? "Z-A" : "A-Z"))</button>
+
+
 <table class="table table-hover">
     <thead class="table-dark">
         <tr>
@@ -21,30 +24,34 @@
         </tr>
     </thead>
     <tbody>
-        @if (toDoItems is not null)
+      @if (toDoItems is not null)
+    {
+        @foreach (var toDoItem in toDoItems)
         {
-            @foreach (var toDoItem in toDoItems)
+            if (CurrentFilter(toDoItem))
             {
-            <tr class="@GetCorrectClassForTableLine(toDoItem.IsCompleted)">
+                <tr class="@GetCorrectClassForTableLine(toDoItem.IsCompleted)">
                     <td>@toDoItem.ToDoItemId</td>
                     <td>@toDoItem.Name</td>
                     <td>@toDoItem.Description</td>
                     <td>@toDoItem.IsCompleted</td>
                     <td>@toDoItem.Category</td>
-                    <td><div class="btn-group" role="group">
-                    <button class="btn btn-success" @onclick="() => EditItem(toDoItem)"><i class="bi bi-pencil-square"></i></button>
-                    <button class="btn btn-danger" @onclick="() => DeleteItem(toDoItem)"><i class="bi bi-trash"></i></button>
-                    <button class="btn btn-warning btn-sm" @onclick="() => ToggleCompletion(toDoItem)"><i class="bi @(toDoItem.IsCompleted ? "bi-check-circle" : "bi-circle")"></i></button>
-                    </div>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-success" @onclick="() => EditItem(toDoItem)"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-danger" @onclick="() => DeleteItem(toDoItem)"><i class="bi bi-trash"></i></button>
+                            <button class="btn btn-warning btn-sm" @onclick="() => ToggleCompletion(toDoItem)"><i class="bi @(toDoItem.IsCompleted ? "bi-check-circle" : "bi-circle")"></i></button>
+                        </div>
                     </td>
-
-
                 </tr>
             }
         }
+    }
     </tbody>
 </table>
-
+<button class="btn btn-success" @onclick="ShowAll">Show All</button>
+<button class="btn btn-success" @onclick="ShowCompleted">Show Completed</button>
+<button class="btn btn-success" @onclick="ShowIncomplete">Show Incomplete</button>
 
 @code
 {
@@ -101,6 +108,23 @@
         toDoItem.IsCompleted = !toDoItem.IsCompleted;
         await ToDoItemsClient.UpdateItemAsync(toDoItem);
         toDoItems = await ToDoItemsClient.ReadItemsAsync();
+    }
+
+     private Func<ToDoItemView, bool> CurrentFilter = (itemView) => {return true;};
+
+    private void ShowAll()
+    {
+        CurrentFilter = (itemView) => {return true;};
+    }
+
+    private void ShowCompleted()
+    {
+        CurrentFilter = (itemView) => { return itemView.IsCompleted;};
+    }
+
+    private void ShowIncomplete()
+    {
+        CurrentFilter = (itemView) => {return !itemView.IsCompleted;};
     }
 }
 

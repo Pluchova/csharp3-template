@@ -1,0 +1,85 @@
+﻿@*@page "/editToDoItem/{ItemId:int}"
+@using ToDoList.Frontend.Clients
+@using ToDoList.Frontend.Views
+@inject NavigationManager NavigationManager
+@inject IToDoItemsClient ToDoItemsClient
+@rendermode InteractiveServer
+<PageTitle>Editace úkolu</PageTitle>
+
+@if (ToDoItem is not null)
+{
+    <EditForm Model="ToDoItem" OnValidSubmit="Submit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="Name">Název</label>
+            <InputText id="Name" @bind-Value="ToDoItem.Name" />
+            <ValidationMessage For="() => ToDoItem.Name" />
+        </div>
+
+        <div class="form-group">
+            <label for="Description">Popis</label>
+            <InputText id="Description" @bind-Value="ToDoItem.Description" />
+            <ValidationMessage For="() => ToDoItem.Description" />
+        </div>
+
+        <div class="form-group">
+            <label for="IsCompleted">Je splněn</label>
+            <InputCheckbox id="IsCompleted" @bind-Value="ToDoItem.IsCompleted" />
+        </div>
+
+        <div class="form-group">
+            <label for="Category">Kategorie</label>
+            <InputText id="Category" @bind-Value="ToDoItem.Category" />
+            <ValidationMessage For="() => ToDoItem.Category" />
+        </div>
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">Uložit</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Zrušit</button>
+        </div>
+    </EditForm>
+}
+else
+{
+    <p>Načítám data...</p>
+}
+
+@code {
+    public delegate void ToDoItemViewProcessingDelegate(ToDoItemView item);
+
+    private ToDoItemViewProcessingDelegate SubmitDelegate;
+
+    [Parameter]
+    public int ItemId { get; set; }
+
+    public ToDoItemView ToDoItem { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ToDoItem = await ToDoItemsClient.ReadItemByIdAsync(ItemId);
+        SubmitDelegate += LogSubmit; // Registrace metody
+    }
+
+    private void LogSubmit(ToDoItemView item)
+    {
+        Console.WriteLine($"Item with ID {item.ToDoItemId} was submitted.");
+    }
+
+    public async Task Submit()
+    {
+        SubmitDelegate?.Invoke(ToDoItem); // Zavolání delegáta
+        await ToDoItemsClient.UpdateItemAsync(ToDoItem);
+        NavigationManager.NavigateTo("/");
+    }
+
+    public void Cancel()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+
+}
+
+*@
